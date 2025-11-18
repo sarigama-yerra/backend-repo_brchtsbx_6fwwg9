@@ -11,10 +11,8 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
+from pydantic import BaseModel, Field, HttpUrl
+from typing import Optional, List, Dict
 
 class User(BaseModel):
     """
@@ -36,13 +34,31 @@ class Product(BaseModel):
     description: Optional[str] = Field(None, description="Product description")
     price: float = Field(..., ge=0, description="Price in dollars")
     category: str = Field(..., description="Product category")
+    images: List[HttpUrl] = Field(default_factory=list, description="Image gallery URLs")
+    thumbnail: Optional[HttpUrl] = Field(None, description="Primary image URL")
+    tags: List[str] = Field(default_factory=list, description="Search/filter tags")
+    specs: Dict[str, str] = Field(default_factory=dict, description="Key/value specs")
     in_stock: bool = Field(True, description="Whether product is in stock")
+    inventory: int = Field(10, ge=0, description="Units in stock")
+    featured: bool = Field(False, description="Show in hero/featured sections")
+    rating: float = Field(4.6, ge=0, le=5, description="Average rating")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class OrderItem(BaseModel):
+    product_id: str
+    title: str
+    price: float
+    quantity: int = Field(1, ge=1)
+    thumbnail: Optional[HttpUrl] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Order(BaseModel):
+    """
+    Orders collection schema
+    Collection name: "order"
+    """
+    items: List[OrderItem]
+    subtotal: float
+    tax: float
+    total: float
+    email: str
+    status: str = Field("paid", description="paid | failed | pending")
+    notes: Optional[str] = None
